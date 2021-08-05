@@ -35,11 +35,12 @@ func (m *MockFlusher) EXPECT() *MockFlusherMockRecorder {
 }
 
 // Flush mocks base method.
-func (m *MockFlusher) Flush(arg0 []models.Question) []models.Question {
+func (m *MockFlusher) Flush(arg0 []models.Question) ([]models.Question, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Flush", arg0)
 	ret0, _ := ret[0].([]models.Question)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Flush indicates an expected call of Flush.
