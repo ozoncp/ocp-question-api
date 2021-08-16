@@ -35,7 +35,7 @@ type flusher struct {
 func (f *flusher) Flush(entities []models.Question) ([]models.Question, error) {
 	bulks, err := utils.SplitToBulks(entities, f.chunkSize)
 	if err != nil {
-		return nil, err
+		return entities, err
 	}
 
 	for i, bulk := range bulks {
