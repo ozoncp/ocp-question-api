@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
+
+package ocp.question.api;
+
+option go_package = "github.com/ozoncp/ocp-question-api/pkg/ocp-question-api;ocp_question_api";
+
+service OcpQuestionApi {
+  // Creates a new question
+  rpc CreateQuestionV1(CreateQuestionV1Request) returns (CreateQuestionV1Response) {
+    option (google.api.http) = {
+      post: "/v1/questions"
+      body: "*"
+    };
+  }
+
+  // Returns a list of questions
+  rpc ListQuestionsV1(ListQuestionsV1Request) returns (ListQuestionsV1Response) {
+    option (google.api.http) = {
+      get: "/v1/questions"
+    };
+  }
+
+  // Returns a description of the question by Id
+  rpc DescribeQuestionV1(DescribeQuestionV1Request) returns (DescribeQuestionV1Response) {
+    option (google.api.http) = {
+      get: "/v1/questions/{questionId}"
+    };
+  }
+
+  // Removes the question by Id
+  rpc RemoveQuestionV1(RemoveQuestionV1Request) returns (RemoveQuestionV1Response) {
+    option (google.api.http) = {
+      delete: "/v1/questions/{questionId}"
+    };
+  }
+}
+
+// Entity
+message Question {
+  uint64 Id = 1 [(validate.rules).uint64.gt = 0];
+  uint64 UserId = 2 [(validate.rules).uint64.gt = 0];
+  string Text = 3;
+}
+
+// Create
+message CreateQuestionV1Request {
+  uint64 userId = 1;
+  uint64 type = 2;
+  string text = 3;
+}
+
+message CreateQuestionV1Response {
+  uint64 questionId = 1;
+}
+
+// Describe
+message DescribeQuestionV1Request {
+  uint64 questionId = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message DescribeQuestionV1Response {
+  Question question = 1;
+}
+
+// List
+message ListQuestionsV1Request {
+}
+
+message ListQuestionsV1Response {
+  repeated Question questions = 1;
+}
+
+// Remove
+message RemoveQuestionV1Request {
+  uint64 questionId = 1 [(validate.rules).uint64.gt = 0];
+}
+
+message RemoveQuestionV1Response {
+  bool success = 1;
+}
