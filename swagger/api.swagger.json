@@ -1,0 +1,236 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "api/ocp-question-api/ocp-question-api.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/questions": {
+      "get": {
+        "summary": "Returns a list of questions",
+        "operationId": "OcpQuestionApi_ListQuestionsV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiListQuestionsV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "OcpQuestionApi"
+        ]
+      },
+      "post": {
+        "summary": "Creates a new question",
+        "operationId": "OcpQuestionApi_CreateQuestionV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiCreateQuestionV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiCreateQuestionV1Request"
+            }
+          }
+        ],
+        "tags": [
+          "OcpQuestionApi"
+        ]
+      }
+    },
+    "/v1/questions/{questionId}": {
+      "get": {
+        "summary": "Returns a description of the question by Id",
+        "operationId": "OcpQuestionApi_DescribeQuestionV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiDescribeQuestionV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "OcpQuestionApi"
+        ]
+      },
+      "delete": {
+        "summary": "Removes the question by Id",
+        "operationId": "OcpQuestionApi_RemoveQuestionV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiRemoveQuestionV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "OcpQuestionApi"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "apiCreateQuestionV1Request": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "type": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "title": "Create"
+    },
+    "apiCreateQuestionV1Response": {
+      "type": "object",
+      "properties": {
+        "questionId": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
+    },
+    "apiDescribeQuestionV1Response": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "$ref": "#/definitions/apiQuestion"
+        }
+      }
+    },
+    "apiListQuestionsV1Response": {
+      "type": "object",
+      "properties": {
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/apiQuestion"
+          }
+        }
+      }
+    },
+    "apiQuestion": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "UserId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "Text": {
+          "type": "string"
+        }
+      },
+      "title": "Entity"
+    },
+    "apiRemoveQuestionV1Response": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
