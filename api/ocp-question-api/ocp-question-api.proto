@@ -67,6 +67,8 @@ message DescribeQuestionV1Response {
 
 // List
 message ListQuestionsV1Request {
+  uint64 limit = 1 [(validate.rules).uint64.gte = 0];
+  uint64 offset = 2 [(validate.rules).uint64.gte = 0];
 }
 
 message ListQuestionsV1Response {

@@ -1,6 +1,7 @@
 package flusher
 
 import (
+	"context"
 	"errors"
 	"github.com/ozoncp/ocp-question-api/internal/models"
 	"github.com/ozoncp/ocp-question-api/internal/repo"
@@ -9,7 +10,7 @@ import (
 
 // Flusher - интерфейс для сброса задач в хранилище
 type Flusher interface {
-	Flush(entities []models.Question) ([]models.Question, error)
+	Flush(ctx context.Context, entities []models.Question) ([]models.Question, error)
 }
 
 // NewFlusher возвращает Flusher с поддержкой батчевого сохранения
@@ -32,14 +33,14 @@ type flusher struct {
 	entityRepo repo.Repo
 }
 
-func (f *flusher) Flush(entities []models.Question) ([]models.Question, error) {
+func (f *flusher) Flush(ctx context.Context, entities []models.Question) ([]models.Question, error) {
 	bulks, err := utils.SplitToBulks(entities, f.chunkSize)
 	if err != nil {
 		return entities, err
 	}
 
 	for i, bulk := range bulks {
-		if err := f.entityRepo.AddEntities(bulk); err != nil {
+		if err := f.entityRepo.AddEntities(ctx, bulk); err != nil {
 			return entities[uint(i)*f.chunkSize:], err
 		}
 	}

@@ -1,6 +1,7 @@
 package saver_test
 
 import (
+	"context"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	"github.com/ozoncp/ocp-question-api/internal/mocks"
@@ -18,11 +19,13 @@ var (
 
 var _ = Describe("Saver", func() {
 	var (
+		ctx      context.Context
 		s        saver.Saver
 		entities []models.Question
 	)
 
 	BeforeEach(func() {
+		ctx = context.Background()
 		mockCtrl = gomock.NewController(GinkgoT())
 		mockFlusher = mocks.NewMockFlusher(mockCtrl)
 
@@ -55,7 +58,7 @@ var _ = Describe("Saver", func() {
 		})
 
 		It("all saved", func() {
-			mockFlusher.EXPECT().Flush(gomock.Any()).Return([]models.Question{}, nil).MinTimes(1)
+			mockFlusher.EXPECT().Flush(ctx, gomock.Any()).Return([]models.Question{}, nil).MinTimes(1)
 
 			for _, entity := range entities {
 				s.Save(entity)
@@ -63,7 +66,7 @@ var _ = Describe("Saver", func() {
 		})
 
 		It("all saved from difference goroutine", func() {
-			mockFlusher.EXPECT().Flush(gomock.Any()).Return([]models.Question{}, nil).MinTimes(0)
+			mockFlusher.EXPECT().Flush(ctx, gomock.Any()).Return([]models.Question{}, nil).MinTimes(0)
 
 			wg := sync.WaitGroup{}
 

@@ -414,6 +414,20 @@ func (m *ListQuestionsV1Request) Validate() error {
 		return nil
 	}
 
+	if m.GetLimit() < 0 {
+		return ListQuestionsV1RequestValidationError{
+			field:  "Limit",
+			reason: "value must be greater than or equal to 0",
+		}
+	}
+
+	if m.GetOffset() < 0 {
+		return ListQuestionsV1RequestValidationError{
+			field:  "Offset",
+			reason: "value must be greater than or equal to 0",
+		}
+	}
+
 	return nil
 }
 
