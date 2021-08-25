@@ -2,3 +2,4 @@
 /vendor.protogen
 /.idea
 /.vscode
+/.env

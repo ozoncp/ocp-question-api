@@ -1,7 +1,9 @@
 package flusher_test
 
 import (
+	"context"
 	"errors"
+
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,12 +14,14 @@ import (
 )
 
 var (
+	ctx      context.Context
 	mockCtrl *gomock.Controller
 	mockRepo *mocks.MockRepo
 )
 
 var _ = Describe("Flusher", func() {
 	BeforeEach(func() {
+		ctx = context.Background()
 		mockCtrl = gomock.NewController(GinkgoT())
 		mockRepo = mocks.NewMockRepo(mockCtrl)
 	})
@@ -72,56 +76,56 @@ var _ = Describe("Flusher with repository", func() {
 
 	Context("with exception", func() {
 		It("Exception on first chunk", func() {
-			mockRepo.EXPECT().AddEntities(gomock.Eq(entities[0:2])).Return(anyError)
+			mockRepo.EXPECT().AddEntities(ctx, gomock.Eq(entities[0:2])).Return(anyError)
 
-			result, _ := f.Flush(entities)
+			result, _ := f.Flush(ctx, entities)
 			Expect(result).Should(BeEquivalentTo(entities[0:]))
 		})
 
 		It("Exception on second chunk", func() {
-			mockRepo.EXPECT().AddEntities(gomock.Eq(entities[0:2])).Times(1)
-			mockRepo.EXPECT().AddEntities(gomock.Eq(entities[2:])).Return(anyError)
+			mockRepo.EXPECT().AddEntities(ctx, gomock.Eq(entities[0:2])).Times(1)
+			mockRepo.EXPECT().AddEntities(ctx, gomock.Eq(entities[2:])).Return(anyError)
 
-			result, _ := f.Flush(entities)
+			result, _ := f.Flush(ctx, entities)
 			Expect(result).Should(BeEquivalentTo(entities[2:]))
 		})
 	})
 
 	Context("without exception", func() {
 		It("Valid chunks", func() {
-			mockRepo.EXPECT().AddEntities(gomock.Eq(entities[0:2])).Times(1)
-			mockRepo.EXPECT().AddEntities(gomock.Eq(entities[2:])).Times(1)
+			mockRepo.EXPECT().AddEntities(ctx, gomock.Eq(entities[0:2])).Times(1)
+			mockRepo.EXPECT().AddEntities(ctx, gomock.Eq(entities[2:])).Times(1)
 
-			result, _ := f.Flush(entities)
+			result, _ := f.Flush(ctx, entities)
 			Expect(result).Should(BeEmpty())
 		})
 
 		It("Valid empty chunks", func() {
-			mockRepo.EXPECT().AddEntities([]models.Question{}).Times(0)
+			mockRepo.EXPECT().AddEntities(ctx, []models.Question{}).Times(0)
 
-			result, _ := f.Flush([]models.Question{})
+			result, _ := f.Flush(ctx, []models.Question{})
 			Expect(result).Should(BeEmpty())
 		})
 
 		It("Valid one incomplete chunk", func() {
-			mockRepo.EXPECT().AddEntities(gomock.Eq(entities[0:1])).Times(1)
+			mockRepo.EXPECT().AddEntities(ctx, gomock.Eq(entities[0:1])).Times(1)
 
-			result, _ := f.Flush(entities[0:1])
+			result, _ := f.Flush(ctx, entities[0:1])
 			Expect(result).Should(BeEmpty())
 		})
 
 		It("Valid one complete chunk", func() {
-			mockRepo.EXPECT().AddEntities(gomock.Eq(entities[0:2])).Times(1)
+			mockRepo.EXPECT().AddEntities(ctx, gomock.Eq(entities[0:2])).Times(1)
 
-			result, _ := f.Flush(entities[0:2])
+			result, _ := f.Flush(ctx, entities[0:2])
 			Expect(result).Should(BeEmpty())
 		})
 
 		It("Valid with chunk size is 1", func() {
-			mockRepo.EXPECT().AddEntities(gomock.Any()).Times(3)
+			mockRepo.EXPECT().AddEntities(ctx, gomock.Any()).Times(3)
 
 			f, _ = flusher.NewFlusher(1, mockRepo)
-			result, _ := f.Flush(entities)
+			result, _ := f.Flush(ctx, entities)
 			Expect(result).Should(BeEmpty())
 		})
 	})

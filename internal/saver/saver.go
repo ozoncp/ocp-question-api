@@ -1,10 +1,12 @@
 package saver
 
 import (
-	"github.com/ozoncp/ocp-question-api/internal/flusher"
-	"github.com/ozoncp/ocp-question-api/internal/models"
+	"context"
 	"log"
 	"time"
+
+	"github.com/ozoncp/ocp-question-api/internal/flusher"
+	"github.com/ozoncp/ocp-question-api/internal/models"
 )
 
 type Saver interface {
@@ -46,7 +48,6 @@ func (s *saver) Init() {
 			ticker.Stop()
 			s.flush(entities)
 			close(s.entities)
-			close(s.done)
 		}()
 
 		for {
@@ -71,7 +72,7 @@ func (s *saver) Close() {
 }
 
 func (s *saver) flush(entities []models.Question) []models.Question {
-	result, err := s.flusher.Flush(entities)
+	result, err := s.flusher.Flush(context.TODO(), entities)
 	if err != nil {
 		log.Fatal(err)
 	}

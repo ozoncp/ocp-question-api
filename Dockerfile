@@ -33,6 +33,9 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=builder /home/developer/go/src/github.com/ozoncp/ocp-question-api/bin/ocp-question-api .
+COPY --from=builder /home/developer/go/src/github.com/ozoncp/ocp-question-api/.env.example .env
 RUN chown root:root ocp-question-api
-EXPOSE 82
+EXPOSE 8081
+EXPOSE 8082
+EXPOSE 9100
 CMD ["./ocp-question-api"]

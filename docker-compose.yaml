@@ -1,0 +1,41 @@
+version: '3.1'
+
+services:
+  database:
+    image: postgres:13.4
+    restart: always
+    env_file: .env
+    ports:
+      - "${DB_EXTERNAL_PORT}:${DB_PORT}"
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - database
+    links:
+      - database
+    ports:
+      - "8081:8081" # rest
+      - "8082:8082" # grpc
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    ports:
+      - "8080:8080"
+    restart: always
+    volumes:
+      - ./swagger:/docs
+    environment:
+      API_URL: ${API_URL}
+      SWAGGER_JSON: /docs/api.swagger.json
+    depends_on:
+      - app
+
+volumes:
+  pgdata:

@@ -1,4 +1,8 @@
-LOCAL_BIN:=$(CURDIR)/bin
+#!make
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
 
 .PHONY: run
 run:
@@ -64,13 +68,27 @@ deps: .install-go-deps
 
 .PHONY: .install-go-deps
 .install-go-deps:
-	ls go.mod || go mod init github.com/ozoncp/ocp-question-api
-	GOBIN=$(LOCAL_BIN) go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
-	GOBIN=$(LOCAL_BIN) go get -u github.com/golang/protobuf/proto
-	GOBIN=$(LOCAL_BIN) go get -u github.com/golang/protobuf/protoc-gen-go
-	GOBIN=$(LOCAL_BIN) go get -u google.golang.org/grpc
-	GOBIN=$(LOCAL_BIN) go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
-	GOBIN=$(LOCAL_BIN) go get -u github.com/envoyproxy/protoc-gen-validate
+	@if [ ! -f go.mod ]; then \
+		go mod init github.com/ozoncp/ocp-question-api ;\
+	fi
+	GOBIN=$(LOCAL_BIN) go get -u github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
+	GOBIN=$(LOCAL_BIN) go get -u github.com/golang/protobuf/proto@v1.5.2
+	GOBIN=$(LOCAL_BIN) go get -u google.golang.org/grpc@v1.40.0
+	GOBIN=$(LOCAL_BIN) go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
+	GOBIN=$(LOCAL_BIN) go get -u github.com/envoyproxy/protoc-gen-validate@v0.6.1
+	GOBIN=$(LOCAL_BIN) go get -u github.com/rs/zerolog@v1.23.0
 	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 	GOBIN=$(LOCAL_BIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
 	GOBIN=$(LOCAL_BIN) go install github.com/envoyproxy/protoc-gen-validate
+
+
+.PHONY: migrate
+migrate: .install-migrate-deps .migrate
+
+.PHONY: .install-migrate-deps
+.install-migrate-deps:
+	go get -u github.com/pressly/goose/v3/cmd/goose@v3.1.0
+
+.PHONY: .migrate
+.migrate:
+	goose -dir database/migrations postgres "postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_EXTERNAL_HOST}:${DB_EXTERNAL_PORT}/${DB_DATABASE}?sslmode=disable" up
