@@ -81,6 +81,39 @@
         ]
       }
     },
+    "/v1/questions/multi": {
+      "post": {
+        "summary": "Creates a new questions",
+        "operationId": "OcpQuestionApi_MultiCreateQuestionsV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiMultiCreateQuestionsV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiMultiCreateQuestionsV1Request"
+            }
+          }
+        ],
+        "tags": [
+          "OcpQuestionApi"
+        ]
+      }
+    },
     "/v1/questions/{questionId}": {
       "get": {
         "summary": "Returns a description of the question by Id",
@@ -141,6 +174,44 @@
         "tags": [
           "OcpQuestionApi"
         ]
+      },
+      "put": {
+        "summary": "Updates the question by Id",
+        "operationId": "OcpQuestionApi_UpdateQuestionV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiUpdateQuestionV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiUpdateQuestionV1Request"
+            }
+          }
+        ],
+        "tags": [
+          "OcpQuestionApi"
+        ]
       }
     }
   },
@@ -149,10 +220,6 @@
       "type": "object",
       "properties": {
         "userId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "type": {
           "type": "string",
           "format": "uint64"
         },
@@ -190,24 +257,73 @@
         }
       }
     },
+    "apiMultiCreateQuestionsV1Request": {
+      "type": "object",
+      "properties": {
+        "questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/apiQuestion"
+          }
+        }
+      },
+      "title": "Multi create"
+    },
+    "apiMultiCreateQuestionsV1Response": {
+      "type": "object",
+      "properties": {
+        "questionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
     "apiQuestion": {
       "type": "object",
       "properties": {
-        "Id": {
+        "id": {
           "type": "string",
           "format": "uint64"
         },
-        "UserId": {
+        "userId": {
           "type": "string",
           "format": "uint64"
         },
-        "Text": {
+        "text": {
           "type": "string"
         }
       },
       "title": "Entity"
     },
     "apiRemoveQuestionV1Response": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        }
+      }
+    },
+    "apiUpdateQuestionV1Request": {
+      "type": "object",
+      "properties": {
+        "questionId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "title": "Update"
+    },
+    "apiUpdateQuestionV1Response": {
       "type": "object",
       "properties": {
         "success": {

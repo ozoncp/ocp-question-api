@@ -18,12 +18,16 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OcpQuestionApiClient interface {
+	// Creates a new questions
+	MultiCreateQuestionsV1(ctx context.Context, in *MultiCreateQuestionsV1Request, opts ...grpc.CallOption) (*MultiCreateQuestionsV1Response, error)
 	// Creates a new question
 	CreateQuestionV1(ctx context.Context, in *CreateQuestionV1Request, opts ...grpc.CallOption) (*CreateQuestionV1Response, error)
 	// Returns a list of questions
 	ListQuestionsV1(ctx context.Context, in *ListQuestionsV1Request, opts ...grpc.CallOption) (*ListQuestionsV1Response, error)
 	// Returns a description of the question by Id
 	DescribeQuestionV1(ctx context.Context, in *DescribeQuestionV1Request, opts ...grpc.CallOption) (*DescribeQuestionV1Response, error)
+	// Updates the question by Id
+	UpdateQuestionV1(ctx context.Context, in *UpdateQuestionV1Request, opts ...grpc.CallOption) (*UpdateQuestionV1Response, error)
 	// Removes the question by Id
 	RemoveQuestionV1(ctx context.Context, in *RemoveQuestionV1Request, opts ...grpc.CallOption) (*RemoveQuestionV1Response, error)
 }
@@ -34,6 +38,15 @@ type ocpQuestionApiClient struct {
 
 func NewOcpQuestionApiClient(cc grpc.ClientConnInterface) OcpQuestionApiClient {
 	return &ocpQuestionApiClient{cc}
+}
+
+func (c *ocpQuestionApiClient) MultiCreateQuestionsV1(ctx context.Context, in *MultiCreateQuestionsV1Request, opts ...grpc.CallOption) (*MultiCreateQuestionsV1Response, error) {
+	out := new(MultiCreateQuestionsV1Response)
+	err := c.cc.Invoke(ctx, "/ocp.question.api.OcpQuestionApi/MultiCreateQuestionsV1", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *ocpQuestionApiClient) CreateQuestionV1(ctx context.Context, in *CreateQuestionV1Request, opts ...grpc.CallOption) (*CreateQuestionV1Response, error) {
@@ -63,6 +76,15 @@ func (c *ocpQuestionApiClient) DescribeQuestionV1(ctx context.Context, in *Descr
 	return out, nil
 }
 
+func (c *ocpQuestionApiClient) UpdateQuestionV1(ctx context.Context, in *UpdateQuestionV1Request, opts ...grpc.CallOption) (*UpdateQuestionV1Response, error) {
+	out := new(UpdateQuestionV1Response)
+	err := c.cc.Invoke(ctx, "/ocp.question.api.OcpQuestionApi/UpdateQuestionV1", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *ocpQuestionApiClient) RemoveQuestionV1(ctx context.Context, in *RemoveQuestionV1Request, opts ...grpc.CallOption) (*RemoveQuestionV1Response, error) {
 	out := new(RemoveQuestionV1Response)
 	err := c.cc.Invoke(ctx, "/ocp.question.api.OcpQuestionApi/RemoveQuestionV1", in, out, opts...)
@@ -76,12 +98,16 @@ func (c *ocpQuestionApiClient) RemoveQuestionV1(ctx context.Context, in *RemoveQ
 // All implementations must embed UnimplementedOcpQuestionApiServer
 // for forward compatibility
 type OcpQuestionApiServer interface {
+	// Creates a new questions
+	MultiCreateQuestionsV1(context.Context, *MultiCreateQuestionsV1Request) (*MultiCreateQuestionsV1Response, error)
 	// Creates a new question
 	CreateQuestionV1(context.Context, *CreateQuestionV1Request) (*CreateQuestionV1Response, error)
 	// Returns a list of questions
 	ListQuestionsV1(context.Context, *ListQuestionsV1Request) (*ListQuestionsV1Response, error)
 	// Returns a description of the question by Id
 	DescribeQuestionV1(context.Context, *DescribeQuestionV1Request) (*DescribeQuestionV1Response, error)
+	// Updates the question by Id
+	UpdateQuestionV1(context.Context, *UpdateQuestionV1Request) (*UpdateQuestionV1Response, error)
 	// Removes the question by Id
 	RemoveQuestionV1(context.Context, *RemoveQuestionV1Request) (*RemoveQuestionV1Response, error)
 	mustEmbedUnimplementedOcpQuestionApiServer()
@@ -91,6 +117,9 @@ type OcpQuestionApiServer interface {
 type UnimplementedOcpQuestionApiServer struct {
 }
 
+func (UnimplementedOcpQuestionApiServer) MultiCreateQuestionsV1(context.Context, *MultiCreateQuestionsV1Request) (*MultiCreateQuestionsV1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MultiCreateQuestionsV1 not implemented")
+}
 func (UnimplementedOcpQuestionApiServer) CreateQuestionV1(context.Context, *CreateQuestionV1Request) (*CreateQuestionV1Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateQuestionV1 not implemented")
 }
@@ -99,6 +128,9 @@ func (UnimplementedOcpQuestionApiServer) ListQuestionsV1(context.Context, *ListQ
 }
 func (UnimplementedOcpQuestionApiServer) DescribeQuestionV1(context.Context, *DescribeQuestionV1Request) (*DescribeQuestionV1Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DescribeQuestionV1 not implemented")
+}
+func (UnimplementedOcpQuestionApiServer) UpdateQuestionV1(context.Context, *UpdateQuestionV1Request) (*UpdateQuestionV1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateQuestionV1 not implemented")
 }
 func (UnimplementedOcpQuestionApiServer) RemoveQuestionV1(context.Context, *RemoveQuestionV1Request) (*RemoveQuestionV1Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveQuestionV1 not implemented")
@@ -114,6 +146,24 @@ type UnsafeOcpQuestionApiServer interface {
 
 func RegisterOcpQuestionApiServer(s grpc.ServiceRegistrar, srv OcpQuestionApiServer) {
 	s.RegisterService(&OcpQuestionApi_ServiceDesc, srv)
+}
+
+func _OcpQuestionApi_MultiCreateQuestionsV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MultiCreateQuestionsV1Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpQuestionApiServer).MultiCreateQuestionsV1(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.question.api.OcpQuestionApi/MultiCreateQuestionsV1",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpQuestionApiServer).MultiCreateQuestionsV1(ctx, req.(*MultiCreateQuestionsV1Request))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _OcpQuestionApi_CreateQuestionV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -170,6 +220,24 @@ func _OcpQuestionApi_DescribeQuestionV1_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OcpQuestionApi_UpdateQuestionV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateQuestionV1Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpQuestionApiServer).UpdateQuestionV1(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.question.api.OcpQuestionApi/UpdateQuestionV1",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpQuestionApiServer).UpdateQuestionV1(ctx, req.(*UpdateQuestionV1Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _OcpQuestionApi_RemoveQuestionV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveQuestionV1Request)
 	if err := dec(in); err != nil {
@@ -196,6 +264,10 @@ var OcpQuestionApi_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*OcpQuestionApiServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "MultiCreateQuestionsV1",
+			Handler:    _OcpQuestionApi_MultiCreateQuestionsV1_Handler,
+		},
+		{
 			MethodName: "CreateQuestionV1",
 			Handler:    _OcpQuestionApi_CreateQuestionV1_Handler,
 		},
@@ -206,6 +278,10 @@ var OcpQuestionApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DescribeQuestionV1",
 			Handler:    _OcpQuestionApi_DescribeQuestionV1_Handler,
+		},
+		{
+			MethodName: "UpdateQuestionV1",
+			Handler:    _OcpQuestionApi_UpdateQuestionV1_Handler,
 		},
 		{
 			MethodName: "RemoveQuestionV1",

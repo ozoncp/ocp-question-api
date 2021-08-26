@@ -16,10 +16,11 @@ var ErrorNotFound = errors.New("not found")
 // Repo - интерфейс хранилища для сущности Question
 type Repo interface {
 	AddEntity(ctx context.Context, entity *models.Question) error
-	AddEntities(ctx context.Context, entities []models.Question) error
+	AddEntities(ctx context.Context, entities []models.Question) ([]models.Question, error)
 	ListEntities(ctx context.Context, limit, offset uint64) ([]models.Question, error)
 	DescribeEntity(ctx context.Context, entityId uint64) (*models.Question, error)
 	RemoveEntity(ctx context.Context, entityId uint64) error
+	UpdateEntity(ctx context.Context, entity *models.Question) error
 }
 
 func NewRepo(db *sqlx.DB) Repo {
@@ -49,7 +50,7 @@ func (r *repo) AddEntity(ctx context.Context, entity *models.Question) error {
 	return nil
 }
 
-func (r *repo) AddEntities(ctx context.Context, entities []models.Question) error {
+func (r *repo) AddEntities(ctx context.Context, entities []models.Question) ([]models.Question, error) {
 	query := squirrel.
 		Insert(tableName).
 		Columns("user_id", "text").
@@ -61,12 +62,22 @@ func (r *repo) AddEntities(ctx context.Context, entities []models.Question) erro
 		query = query.Values(entity.UserId, entity.Text)
 	}
 
-	_, err := query.QueryContext(ctx)
+	rows, err := query.QueryContext(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	i := 0
+	for rows.Next() {
+		err = rows.Scan(&entities[i].Id)
+		if err != nil {
+			return nil, err
+		}
+
+		i++
+	}
+
+	return entities, nil
 }
 
 func (r *repo) ListEntities(ctx context.Context, limit, offset uint64) ([]models.Question, error) {
@@ -106,7 +117,7 @@ func (r *repo) ListEntities(ctx context.Context, limit, offset uint64) ([]models
 }
 
 func (r *repo) DescribeEntity(ctx context.Context, entityId uint64) (*models.Question, error) {
-	query := squirrel.Select("id", "user_id", "created", "link").
+	query := squirrel.Select("id", "user_id", "text").
 		From(tableName).
 		Where(squirrel.Eq{"id": entityId}).
 		RunWith(r.db).
@@ -123,6 +134,31 @@ func (r *repo) DescribeEntity(ctx context.Context, entityId uint64) (*models.Que
 	}
 
 	return &question, nil
+}
+
+func (r *repo) UpdateEntity(ctx context.Context, entity *models.Question) error {
+	query := squirrel.Update(tableName).
+		Set("user_id", entity.UserId).
+		Set("text", entity.Text).
+		Where(squirrel.Eq{"id": entity.Id}).
+		RunWith(r.db).
+		PlaceholderFormat(squirrel.Dollar)
+
+	result, err := query.ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected <= 0 {
+		return ErrorNotFound
+	}
+
+	return nil
 }
 
 func (r *repo) RemoveEntity(ctx context.Context, entityId uint64) error {
