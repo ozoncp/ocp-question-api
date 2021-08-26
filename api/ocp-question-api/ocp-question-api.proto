@@ -8,6 +8,14 @@ package ocp.question.api;
 option go_package = "github.com/ozoncp/ocp-question-api/pkg/ocp-question-api;ocp_question_api";
 
 service OcpQuestionApi {
+  // Creates a new questions
+  rpc MultiCreateQuestionsV1(MultiCreateQuestionsV1Request) returns (MultiCreateQuestionsV1Response) {
+    option (google.api.http) = {
+      post: "/v1/questions/multi"
+      body: "*"
+    };
+  }
+
   // Creates a new question
   rpc CreateQuestionV1(CreateQuestionV1Request) returns (CreateQuestionV1Response) {
     option (google.api.http) = {
@@ -30,6 +38,14 @@ service OcpQuestionApi {
     };
   }
 
+  // Updates the question by Id
+  rpc UpdateQuestionV1(UpdateQuestionV1Request) returns (UpdateQuestionV1Response) {
+    option (google.api.http) = {
+      put: "/v1/questions/{questionId}"
+      body: "*"
+    };
+  }
+
   // Removes the question by Id
   rpc RemoveQuestionV1(RemoveQuestionV1Request) returns (RemoveQuestionV1Response) {
     option (google.api.http) = {
@@ -40,16 +56,24 @@ service OcpQuestionApi {
 
 // Entity
 message Question {
-  uint64 Id = 1 [(validate.rules).uint64.gt = 0];
-  uint64 UserId = 2 [(validate.rules).uint64.gt = 0];
-  string Text = 3;
+  uint64 id     = 1;
+  uint64 userId = 2;
+  string text   = 3;
+}
+
+// Multi create
+message MultiCreateQuestionsV1Request {
+  repeated Question questions = 1 [(validate.rules).repeated.min_items = 1];
+}
+
+message MultiCreateQuestionsV1Response {
+  repeated uint64 questionIds = 1;
 }
 
 // Create
 message CreateQuestionV1Request {
-  uint64 userId = 1;
-  uint64 type = 2;
-  string text = 3;
+  uint64 userId = 2 [(validate.rules).uint64.gt = 0];
+  string text   = 3 [(validate.rules).string.min_len = 3];
 }
 
 message CreateQuestionV1Response {
@@ -67,12 +91,23 @@ message DescribeQuestionV1Response {
 
 // List
 message ListQuestionsV1Request {
-  uint64 limit = 1 [(validate.rules).uint64.gte = 0];
+  uint64 limit  = 1 [(validate.rules).uint64.gte = 0];
   uint64 offset = 2 [(validate.rules).uint64.gte = 0];
 }
 
 message ListQuestionsV1Response {
   repeated Question questions = 1;
+}
+
+// Update
+message UpdateQuestionV1Request {
+  uint64 questionId     = 1 [(validate.rules).uint64.gt = 0];
+  uint64 userId = 2 [(validate.rules).uint64.gt = 0];
+  string text   = 3 [(validate.rules).string.min_len = 3];
+}
+
+message UpdateQuestionV1Response {
+  bool success = 1;
 }
 
 // Remove

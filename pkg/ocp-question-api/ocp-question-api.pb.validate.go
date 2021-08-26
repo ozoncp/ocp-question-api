@@ -40,19 +40,9 @@ func (m *Question) Validate() error {
 		return nil
 	}
 
-	if m.GetId() <= 0 {
-		return QuestionValidationError{
-			field:  "Id",
-			reason: "value must be greater than 0",
-		}
-	}
+	// no validation rules for Id
 
-	if m.GetUserId() <= 0 {
-		return QuestionValidationError{
-			field:  "UserId",
-			reason: "value must be greater than 0",
-		}
-	}
+	// no validation rules for UserId
 
 	// no validation rules for Text
 
@@ -113,6 +103,164 @@ var _ interface {
 	ErrorName() string
 } = QuestionValidationError{}
 
+// Validate checks the field values on MultiCreateQuestionsV1Request with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *MultiCreateQuestionsV1Request) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if len(m.GetQuestions()) < 1 {
+		return MultiCreateQuestionsV1RequestValidationError{
+			field:  "Questions",
+			reason: "value must contain at least 1 item(s)",
+		}
+	}
+
+	for idx, item := range m.GetQuestions() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return MultiCreateQuestionsV1RequestValidationError{
+					field:  fmt.Sprintf("Questions[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// MultiCreateQuestionsV1RequestValidationError is the validation error
+// returned by MultiCreateQuestionsV1Request.Validate if the designated
+// constraints aren't met.
+type MultiCreateQuestionsV1RequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MultiCreateQuestionsV1RequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MultiCreateQuestionsV1RequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MultiCreateQuestionsV1RequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MultiCreateQuestionsV1RequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MultiCreateQuestionsV1RequestValidationError) ErrorName() string {
+	return "MultiCreateQuestionsV1RequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MultiCreateQuestionsV1RequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMultiCreateQuestionsV1Request.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MultiCreateQuestionsV1RequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MultiCreateQuestionsV1RequestValidationError{}
+
+// Validate checks the field values on MultiCreateQuestionsV1Response with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *MultiCreateQuestionsV1Response) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	return nil
+}
+
+// MultiCreateQuestionsV1ResponseValidationError is the validation error
+// returned by MultiCreateQuestionsV1Response.Validate if the designated
+// constraints aren't met.
+type MultiCreateQuestionsV1ResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MultiCreateQuestionsV1ResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MultiCreateQuestionsV1ResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MultiCreateQuestionsV1ResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MultiCreateQuestionsV1ResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MultiCreateQuestionsV1ResponseValidationError) ErrorName() string {
+	return "MultiCreateQuestionsV1ResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e MultiCreateQuestionsV1ResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMultiCreateQuestionsV1Response.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MultiCreateQuestionsV1ResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MultiCreateQuestionsV1ResponseValidationError{}
+
 // Validate checks the field values on CreateQuestionV1Request with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -121,11 +269,19 @@ func (m *CreateQuestionV1Request) Validate() error {
 		return nil
 	}
 
-	// no validation rules for UserId
+	if m.GetUserId() <= 0 {
+		return CreateQuestionV1RequestValidationError{
+			field:  "UserId",
+			reason: "value must be greater than 0",
+		}
+	}
 
-	// no validation rules for Type
-
-	// no validation rules for Text
+	if utf8.RuneCountInString(m.GetText()) < 3 {
+		return CreateQuestionV1RequestValidationError{
+			field:  "Text",
+			reason: "value length must be at least 3 runes",
+		}
+	}
 
 	return nil
 }
@@ -568,6 +724,163 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListQuestionsV1ResponseValidationError{}
+
+// Validate checks the field values on UpdateQuestionV1Request with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *UpdateQuestionV1Request) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if m.GetQuestionId() <= 0 {
+		return UpdateQuestionV1RequestValidationError{
+			field:  "QuestionId",
+			reason: "value must be greater than 0",
+		}
+	}
+
+	if m.GetUserId() <= 0 {
+		return UpdateQuestionV1RequestValidationError{
+			field:  "UserId",
+			reason: "value must be greater than 0",
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetText()) < 3 {
+		return UpdateQuestionV1RequestValidationError{
+			field:  "Text",
+			reason: "value length must be at least 3 runes",
+		}
+	}
+
+	return nil
+}
+
+// UpdateQuestionV1RequestValidationError is the validation error returned by
+// UpdateQuestionV1Request.Validate if the designated constraints aren't met.
+type UpdateQuestionV1RequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateQuestionV1RequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateQuestionV1RequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateQuestionV1RequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateQuestionV1RequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateQuestionV1RequestValidationError) ErrorName() string {
+	return "UpdateQuestionV1RequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateQuestionV1RequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateQuestionV1Request.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateQuestionV1RequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateQuestionV1RequestValidationError{}
+
+// Validate checks the field values on UpdateQuestionV1Response with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *UpdateQuestionV1Response) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Success
+
+	return nil
+}
+
+// UpdateQuestionV1ResponseValidationError is the validation error returned by
+// UpdateQuestionV1Response.Validate if the designated constraints aren't met.
+type UpdateQuestionV1ResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateQuestionV1ResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateQuestionV1ResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateQuestionV1ResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateQuestionV1ResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateQuestionV1ResponseValidationError) ErrorName() string {
+	return "UpdateQuestionV1ResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateQuestionV1ResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateQuestionV1Response.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateQuestionV1ResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateQuestionV1ResponseValidationError{}
 
 // Validate checks the field values on RemoveQuestionV1Request with the rules
 // defined in the proto definition for this message. If any rules are

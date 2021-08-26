@@ -3,15 +3,20 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/jmoiron/sqlx"
-	"github.com/ozoncp/ocp-question-api/internal/repo"
-	"log"
+	"github.com/ozoncp/ocp-question-api/internal/metrics"
+	"github.com/ozoncp/ocp-question-api/internal/producer"
+	"github.com/ozoncp/ocp-question-api/internal/tracer"
+	"io"
 	"net"
 	"net/http"
 	"os"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
+	"github.com/ozoncp/ocp-question-api/internal/repo"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
 	_ "github.com/jackc/pgx/v4"
@@ -29,7 +34,7 @@ const (
 func run() error {
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Error().Err(err).Msgf("failed to listen: %v", err)
 	}
 
 	dsn := fmt.Sprintf(
@@ -47,10 +52,13 @@ func run() error {
 	}
 
 	s := grpc.NewServer()
-	desc.RegisterOcpQuestionApiServer(s, api.NewOcpQuestionApiServer(repo.NewRepo(db)))
+	desc.RegisterOcpQuestionApiServer(s, api.NewOcpQuestionApiServer(
+		repo.NewRepo(db),
+		producer.NewProducer(),
+	))
 
 	if err := s.Serve(listen); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Error().Err(err).Msgf("failed to serve: %v", err)
 	}
 
 	return nil
@@ -75,15 +83,38 @@ func runJSON() {
 	}
 }
 
+// metricsServer - metrics server
+func runMetrics() {
+	metrics.RegisterMetrics()
+	http.Handle("/metrics", promhttp.Handler())
+
+	err := http.ListenAndServe(":9100", nil)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func runTracer() {
+	closer := tracer.InitTracer("ocp-question-api")
+	defer func(closer io.Closer) {
+		err := closer.Close()
+		if err != nil {
+			log.Error().Err(err).Msg("Tracer closing error")
+		}
+	}(closer)
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Error().Err(err).Msgf("Error loading .env file")
 	}
 
+	go runMetrics()
 	go runJSON()
+	runTracer()
 
 	if err := run(); err != nil {
-		log.Fatal(err)
+		log.Error().Err(err).Msgf("%v", err)
 	}
 }
