@@ -2,13 +2,13 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"log"
 
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc"
-
-	"database/sql"
 )
 
 var dbKey = "db"
@@ -19,13 +19,13 @@ func GetDBKey() string {
 }
 
 // Connect ...
-func Connect(DSN string) *sql.DB {
-	db, err := sql.Open("pgx", DSN)
+func Connect(DSN string) *sqlx.DB {
+	db, err := sqlx.Open("pgx", DSN)
 	if err != nil {
 		log.Fatalf("connect do db error %v", err)
 	}
-	return db
 
+	return db
 }
 
 // NewContext ...

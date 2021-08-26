@@ -3,27 +3,26 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/ozoncp/ocp-question-api/internal/metrics"
-	"github.com/ozoncp/ocp-question-api/internal/producer"
-	"github.com/ozoncp/ocp-question-api/internal/tracer"
 	"io"
 	"net"
 	"net/http"
-	"os"
+
+	"github.com/ozoncp/ocp-question-api/internal/api"
+	"github.com/ozoncp/ocp-question-api/internal/config"
+	"github.com/ozoncp/ocp-question-api/internal/db"
+	"github.com/ozoncp/ocp-question-api/internal/metrics"
+	"github.com/ozoncp/ocp-question-api/internal/producer"
+	"github.com/ozoncp/ocp-question-api/internal/repo"
+	"github.com/ozoncp/ocp-question-api/internal/tracer"
+	desc "github.com/ozoncp/ocp-question-api/pkg/ocp-question-api"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/jmoiron/sqlx"
+	_ "github.com/jackc/pgx/v4"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/joho/godotenv"
-	"github.com/ozoncp/ocp-question-api/internal/repo"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
-
-	_ "github.com/jackc/pgx/v4"
-	_ "github.com/jackc/pgx/v4/stdlib"
-
-	"github.com/ozoncp/ocp-question-api/internal/api"
-	desc "github.com/ozoncp/ocp-question-api/pkg/ocp-question-api"
 )
 
 const (
@@ -31,7 +30,16 @@ const (
 	grpcServerEndpoint = "localhost:82"
 )
 
+func init() {
+	// load values from .env into the system
+	if err := godotenv.Load(); err != nil {
+		log.Error().Err(err).Msg("No .env file found")
+	}
+}
+
 func run() error {
+	conf := config.NewConfig()
+
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to listen: %v", err)
@@ -39,21 +47,21 @@ func run() error {
 
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		os.Getenv("DB_USERNAME"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_EXTERNAL_HOST"),
-		os.Getenv("DB_EXTERNAL_PORT"),
-		os.Getenv("DB_DATABASE"),
+		conf.Database.Username,
+		conf.Database.Password,
+		conf.Database.ExternalHost,
+		conf.Database.ExternalPort,
+		conf.Database.Database,
 	)
 
-	db, err := sqlx.Open("pgx", dsn)
+	dbConn := db.Connect(dsn)
 	if err != nil {
 		return err
 	}
 
 	s := grpc.NewServer()
 	desc.RegisterOcpQuestionApiServer(s, api.NewOcpQuestionApiServer(
-		repo.NewRepo(db),
+		repo.NewRepo(dbConn),
 		producer.NewProducer(),
 	))
 
@@ -105,14 +113,9 @@ func runTracer() {
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Error().Err(err).Msgf("Error loading .env file")
-	}
-
 	go runMetrics()
 	go runJSON()
-	runTracer()
+	go runTracer()
 
 	if err := run(); err != nil {
 		log.Error().Err(err).Msgf("%v", err)
