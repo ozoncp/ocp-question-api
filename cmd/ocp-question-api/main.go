@@ -6,6 +6,9 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/ozoncp/ocp-question-api/internal/api"
 	"github.com/ozoncp/ocp-question-api/internal/config"
@@ -112,6 +115,24 @@ func runTracer() {
 	}(closer)
 }
 
+func awaitSignal() {
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+		fmt.Println()
+		fmt.Println(sig)
+		done <- true
+	}()
+
+	fmt.Println("awaiting signal...")
+	<-done
+	fmt.Println("exiting")
+}
+
 func main() {
 	go runMetrics()
 	go runJSON()
@@ -120,4 +141,6 @@ func main() {
 	if err := run(); err != nil {
 		log.Error().Err(err).Msgf("%v", err)
 	}
+
+	awaitSignal()
 }
