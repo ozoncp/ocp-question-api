@@ -23,9 +23,11 @@ services:
       - kafka
     links:
       - database
+      - kafka
     ports:
       - "8081:8081" # rest
       - "8082:8082" # grpc
+      - "9100:9100" # prometheus
 
   swagger-ui:
     image: swaggerapi/swagger-ui

@@ -19,7 +19,7 @@ import (
 	"github.com/ozoncp/ocp-question-api/internal/tracer"
 	desc "github.com/ozoncp/ocp-question-api/pkg/ocp-question-api"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/joho/godotenv"
@@ -52,8 +52,8 @@ func run() error {
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		conf.Database.Username,
 		conf.Database.Password,
-		conf.Database.ExternalHost,
-		conf.Database.ExternalPort,
+		conf.Database.Host,
+		conf.Database.Port,
 		conf.Database.Database,
 	)
 
