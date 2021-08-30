@@ -18,6 +18,7 @@ require (
 	github.com/onsi/gomega v1.16.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/ozoncp/ocp-question-api/pkg/ocp-question-api v0.0.0-00010101000000-000000000000
+	github.com/pressly/goose/v3 v3.1.0 // indirect
 	github.com/prometheus/client_golang v1.11.0
 	github.com/rs/zerolog v1.23.0
 	github.com/uber/jaeger-client-go v2.29.1+incompatible

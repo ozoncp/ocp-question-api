@@ -3,8 +3,9 @@ package repo
 import (
 	"context"
 	"errors"
+	"time"
 
-	"github.com/Masterminds/squirrel"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	"github.com/ozoncp/ocp-question-api/internal/models"
 )
@@ -35,12 +36,12 @@ type repo struct {
 }
 
 func (r *repo) AddEntity(ctx context.Context, entity *models.Question) error {
-	query := squirrel.Insert(tableName).
+	query := sq.Insert(tableName).
 		Columns("user_id", "text").
 		Values(entity.UserId, entity.Text).
 		Suffix("RETURNING \"id\"").
 		RunWith(r.db).
-		PlaceholderFormat(squirrel.Dollar)
+		PlaceholderFormat(sq.Dollar)
 
 	err := query.QueryRowContext(ctx).Scan(&entity.Id)
 	if err != nil {
@@ -51,12 +52,12 @@ func (r *repo) AddEntity(ctx context.Context, entity *models.Question) error {
 }
 
 func (r *repo) AddEntities(ctx context.Context, entities []models.Question) ([]models.Question, error) {
-	query := squirrel.
+	query := sq.
 		Insert(tableName).
 		Columns("user_id", "text").
 		Suffix("RETURNING \"id\"").
 		RunWith(r.db).
-		PlaceholderFormat(squirrel.Dollar)
+		PlaceholderFormat(sq.Dollar)
 
 	for _, entity := range entities {
 		query = query.Values(entity.UserId, entity.Text)
@@ -81,12 +82,13 @@ func (r *repo) AddEntities(ctx context.Context, entities []models.Question) ([]m
 }
 
 func (r *repo) ListEntities(ctx context.Context, limit, offset uint64) ([]models.Question, error) {
-	query := squirrel.Select("id", "user_id", "text").
+	query := sq.Select("id", "user_id", "text").
 		From(tableName).
+		Where(sq.Eq{"deleted_at": nil}).
 		RunWith(r.db).
 		Limit(limit).
 		Offset(offset).
-		PlaceholderFormat(squirrel.Dollar)
+		PlaceholderFormat(sq.Dollar)
 
 	rows, err := query.QueryContext(ctx)
 	if err != nil {
@@ -117,11 +119,12 @@ func (r *repo) ListEntities(ctx context.Context, limit, offset uint64) ([]models
 }
 
 func (r *repo) DescribeEntity(ctx context.Context, entityId uint64) (*models.Question, error) {
-	query := squirrel.Select("id", "user_id", "text").
+	query := sq.Select("id", "user_id", "text").
 		From(tableName).
-		Where(squirrel.Eq{"id": entityId}).
+		Where(sq.Eq{"id": entityId}).
+		Where(sq.Eq{"deleted_at": nil}).
 		RunWith(r.db).
-		PlaceholderFormat(squirrel.Dollar)
+		PlaceholderFormat(sq.Dollar)
 
 	var question models.Question
 
@@ -137,12 +140,13 @@ func (r *repo) DescribeEntity(ctx context.Context, entityId uint64) (*models.Que
 }
 
 func (r *repo) UpdateEntity(ctx context.Context, entity *models.Question) error {
-	query := squirrel.Update(tableName).
+	query := sq.Update(tableName).
 		Set("user_id", entity.UserId).
 		Set("text", entity.Text).
-		Where(squirrel.Eq{"id": entity.Id}).
+		Where(sq.Eq{"id": entity.Id}).
+		Where(sq.Eq{"deleted_at": nil}).
 		RunWith(r.db).
-		PlaceholderFormat(squirrel.Dollar)
+		PlaceholderFormat(sq.Dollar)
 
 	result, err := query.ExecContext(ctx)
 	if err != nil {
@@ -162,10 +166,12 @@ func (r *repo) UpdateEntity(ctx context.Context, entity *models.Question) error 
 }
 
 func (r *repo) RemoveEntity(ctx context.Context, entityId uint64) error {
-	query := squirrel.Delete(tableName).
-		Where(squirrel.Eq{"id": entityId}).
+	query := sq.Update(tableName).
+		Set("deleted_at", time.Now()).
+		Where(sq.Eq{"id": entityId}).
+		Where(sq.Eq{"deleted_at": nil}).
 		RunWith(r.db).
-		PlaceholderFormat(squirrel.Dollar)
+		PlaceholderFormat(sq.Dollar)
 
 	result, err := query.ExecContext(ctx)
 	if err != nil {
