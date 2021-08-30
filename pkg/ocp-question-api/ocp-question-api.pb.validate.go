@@ -570,16 +570,9 @@ func (m *ListQuestionsV1Request) Validate() error {
 		return nil
 	}
 
-	if m.GetLimit() < 0 {
+	if m.GetPage() < 0 {
 		return ListQuestionsV1RequestValidationError{
-			field:  "Limit",
-			reason: "value must be greater than or equal to 0",
-		}
-	}
-
-	if m.GetOffset() < 0 {
-		return ListQuestionsV1RequestValidationError{
-			field:  "Offset",
+			field:  "Page",
 			reason: "value must be greater than or equal to 0",
 		}
 	}
@@ -651,13 +644,21 @@ func (m *ListQuestionsV1Response) Validate() error {
 		return nil
 	}
 
-	for idx, item := range m.GetQuestions() {
+	// no validation rules for Total
+
+	// no validation rules for PerPage
+
+	// no validation rules for CurrentPage
+
+	// no validation rules for LastPage
+
+	for idx, item := range m.GetItems() {
 		_, _ = idx, item
 
 		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ListQuestionsV1ResponseValidationError{
-					field:  fmt.Sprintf("Questions[%v]", idx),
+					field:  fmt.Sprintf("Items[%v]", idx),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}

@@ -31,14 +31,7 @@
         },
         "parameters": [
           {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          },
-          {
-            "name": "offset",
+            "name": "page",
             "in": "query",
             "required": false,
             "type": "string",
@@ -249,7 +242,23 @@
     "apiListQuestionsV1Response": {
       "type": "object",
       "properties": {
-        "questions": {
+        "total": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "per_page": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "current_page": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "last_page": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "items": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/apiQuestion"

@@ -8,9 +8,11 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	"github.com/ozoncp/ocp-question-api/internal/models"
+	"github.com/ozoncp/ocp-question-api/internal/pagination"
 )
 
 const tableName = "questions"
+const limit = 10
 
 var ErrorNotFound = errors.New("not found")
 
@@ -18,7 +20,7 @@ var ErrorNotFound = errors.New("not found")
 type Repo interface {
 	AddEntity(ctx context.Context, entity *models.Question) error
 	AddEntities(ctx context.Context, entities []models.Question) ([]models.Question, error)
-	ListEntities(ctx context.Context, limit, offset uint64) ([]models.Question, error)
+	ListEntities(ctx context.Context, page uint64) ([]models.Question, pagination.Paginator, error)
 	DescribeEntity(ctx context.Context, entityId uint64) (*models.Question, error)
 	RemoveEntity(ctx context.Context, entityId uint64) error
 	UpdateEntity(ctx context.Context, entity *models.Question) error
@@ -81,22 +83,22 @@ func (r *repo) AddEntities(ctx context.Context, entities []models.Question) ([]m
 	return entities, nil
 }
 
-func (r *repo) ListEntities(ctx context.Context, limit, offset uint64) ([]models.Question, error) {
+func (r *repo) ListEntities(ctx context.Context, page uint64) ([]models.Question, pagination.Paginator, error) {
 	query := sq.Select("id", "user_id", "text").
 		From(tableName).
 		Where(sq.Eq{"deleted_at": nil}).
 		RunWith(r.db).
 		Limit(limit).
-		Offset(offset).
+		Offset(limit * (page - 1)).
 		PlaceholderFormat(sq.Dollar)
 
 	rows, err := query.QueryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var questions []models.Question
@@ -109,13 +111,28 @@ func (r *repo) ListEntities(ctx context.Context, limit, offset uint64) ([]models
 			&question.UserId,
 			&question.Text,
 		); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		questions = append(questions, question)
 	}
 
-	return questions, nil
+	var total uint64
+	totalQuery := sq.Select("count(id)").
+		From(tableName).
+		Where(sq.Eq{"deleted_at": nil}).
+		RunWith(r.db).
+		PlaceholderFormat(sq.Dollar)
+
+	if err := totalQuery.QueryRowContext(ctx).Scan(
+		&total,
+	); err != nil {
+		return nil, nil, err
+	}
+
+	paginator := pagination.New(page, limit, total)
+
+	return questions, paginator, nil
 }
 
 func (r *repo) DescribeEntity(ctx context.Context, entityId uint64) (*models.Question, error) {
