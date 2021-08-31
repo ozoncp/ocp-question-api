@@ -8,8 +8,7 @@ require (
 	github.com/Shopify/sarama v1.29.1
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/golang/mock v1.4.4
-	github.com/google/go-cmp v0.5.6 // indirect
-	github.com/grpc-ecosystem/grpc-gateway v1.16.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0

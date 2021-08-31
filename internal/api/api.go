@@ -162,13 +162,18 @@ func (s *questionApiServer) ListQuestionsV1(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	entities, err := s.repo.ListEntities(ctx, req.GetLimit(), req.GetOffset())
+	page := req.GetPage()
+	if page == 0 {
+		page = 1
+	}
+
+	entities, paginator, err := s.repo.ListEntities(ctx, page)
 	if err != nil {
 		log.Error().Err(err).Msg("Reading of the questions has failed")
 		return nil, err
 	}
 
-	log.Info().Msgf("Reading of the questions was successful %v %v", req.GetLimit(), req.GetOffset())
+	log.Info().Msgf("Reading of the questions was successful")
 
 	questions := make([]*desc.Question, 0, len(entities))
 
@@ -181,7 +186,11 @@ func (s *questionApiServer) ListQuestionsV1(
 	}
 
 	return &desc.ListQuestionsV1Response{
-		Questions: questions,
+		Total:       paginator.GetTotal(),
+		CurrentPage: paginator.GetCurrentPage(),
+		PerPage:     paginator.GetPerPage(),
+		LastPage:    paginator.GetLastPage(),
+		Items:       questions,
 	}, nil
 }
 

@@ -1,6 +1,7 @@
 package producer
 
 import (
+	"github.com/ozoncp/ocp-question-api/internal/config"
 	"time"
 
 	"encoding/json"
@@ -18,23 +19,23 @@ type producer struct {
 	topic    string
 }
 
-var brokers = []string{"localhost:9094"}
-
 // NewProducer - creates a new instance of Producer
 func NewProducer() *producer {
-	config := sarama.NewConfig()
-	config.Producer.RequiredAcks = sarama.WaitForLocal
-	config.Producer.Partitioner = sarama.NewRandomPartitioner
-	config.Producer.Return.Successes = true
+	conf := config.NewConfig()
 
-	syncProducer, err := sarama.NewSyncProducer(brokers, config)
+	producerConfig := sarama.NewConfig()
+	producerConfig.Producer.RequiredAcks = sarama.WaitForLocal
+	producerConfig.Producer.Partitioner = sarama.NewRandomPartitioner
+	producerConfig.Producer.Return.Successes = true
+
+	syncProducer, err := sarama.NewSyncProducer(conf.Kafka.Brokers, producerConfig)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create Sarama new sync producer")
 	}
 
 	return &producer{
 		producer: syncProducer,
-		topic:    "questions",
+		topic:    conf.Kafka.Topic,
 	}
 }
 
