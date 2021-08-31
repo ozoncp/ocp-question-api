@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"os"
@@ -33,6 +32,8 @@ const (
 	grpcServerEndpoint = "localhost:82"
 )
 
+var closers []func()
+
 func init() {
 	// load values from .env into the system
 	if err := godotenv.Load(); err != nil {
@@ -40,26 +41,26 @@ func init() {
 	}
 }
 
-func run() error {
+func run() {
 	conf := config.NewConfig()
 
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to listen: %v", err)
+		log.Error().Err(err).Msg("failed to listen")
 	}
 
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		conf.Database.Username,
 		conf.Database.Password,
-		conf.Database.Host,
-		conf.Database.Port,
+		conf.Database.ExternalHost,
+		conf.Database.ExternalPort,
 		conf.Database.Database,
 	)
 
 	dbConn := db.Connect(dsn)
 	if err != nil {
-		return err
+		log.Error().Err(err).Msg("failed to db connect")
 	}
 
 	s := grpc.NewServer()
@@ -68,17 +69,17 @@ func run() error {
 		producer.NewProducer(),
 	))
 
+	closers = append(closers, s.Stop)
+
 	if err := s.Serve(listen); err != nil {
 		log.Error().Err(err).Msgf("failed to serve: %v", err)
 	}
-
-	return nil
 }
 
 func runJSON() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	closers = append(closers, cancel)
 
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
@@ -107,12 +108,12 @@ func runMetrics() {
 
 func runTracer() {
 	closer := tracer.InitTracer("ocp-question-api")
-	defer func(closer io.Closer) {
+	closers = append(closers, func() {
 		err := closer.Close()
 		if err != nil {
 			log.Error().Err(err).Msg("Tracer closing error")
 		}
-	}(closer)
+	})
 }
 
 func awaitSignal() {
@@ -131,16 +132,19 @@ func awaitSignal() {
 	fmt.Println("awaiting signal...")
 	<-done
 	fmt.Println("exiting")
+
+	for _, closer := range closers {
+		closer()
+	}
 }
 
 func main() {
 	go runMetrics()
 	go runJSON()
 	go runTracer()
-
-	if err := run(); err != nil {
-		log.Error().Err(err).Msgf("%v", err)
-	}
+	go run()
 
 	awaitSignal()
+
+	os.Exit(1)
 }
